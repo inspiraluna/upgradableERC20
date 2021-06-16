@@ -1,11 +1,4 @@
 node_modules
-
-#Hardhat files
-cache
+.secret*
 artifacts
-
-node_modules
-
-#Hardhat files
 cache
-artifacts
