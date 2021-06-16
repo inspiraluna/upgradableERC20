@@ -1,12 +1,52 @@
 // hardhat.config.js
 require("@nomiclabs/hardhat-ethers");
 require('@openzeppelin/hardhat-upgrades');
+require("hardhat-gas-reporter");
 
+const fs = require('fs');
+const privateKey = fs.readFileSync(".secret").toString().trim();
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
   solidity: "0.8.0",
+  networks: {
+    hardhat: {
+    },
+    goerli: {
+      url: `https://goerli.infura.io/v3/ab8c974ffadf4558a55b0148d4dd9b57`,
+      accounts: [privateKey],
+      gas: "auto",
+      gasPrice: "auto"
+    },
+
+    mumbai: {
+      url: "https://rpc-mumbai.maticvigil.com",
+      accounts: [privateKey]
+    }
+  },
+  solidity: {
+    version: "0.8.0",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
+  gasReporter: {
+    currency: 'EUR',
+    //gasPrice: 21
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  },
+  mocha: {
+    timeout: 20000
+  }
 };
 
 // require("@nomiclabs/hardhat-waffle");

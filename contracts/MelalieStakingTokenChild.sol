@@ -1,47 +1,45 @@
+//pragma solidity ^0.5.0;
 pragma solidity ^0.8.0;
+//pragma solidity ^0.7.3;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Staking Token (STK)
  * @author Alberto Cuesta Canada
  * @author (modifier) Nico Krause Germany
- * @notice Implements a ERC20Upgradable staking token with incentive distribution.
+ * @notice Implements a basic ERC20 staking token with incentive distribution.
  */
-contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
-    using SafeMathUpgradeable for uint256;
+contract MelalieStakingTokenChild is ERC20, Ownable {
 
-    address public mintableERC20PredicateProxy;
+    using SafeMath for uint256;
 
     address[] internal stakeholders;
     mapping(address => uint256) internal stakes;
     mapping(address => uint256) internal rewards;
 
     /**
-     * @notice initialize function of the upgradable contract
+     * @notice The constructor for the Staking Token.
      */
-    function initialize(
-        string memory name,
-        string memory symbol
-        // uint256 _supply
-    ) public initializer {
-        __ERC20_init(name, symbol);
-        __Ownable_init();
-        mintableERC20PredicateProxy = msg.sender; //we can mint
-        // _mint(address(this), _supply);
+    constructor(string memory name,string memory symbol, uint256 _supply) 
+        public ERC20(name, symbol) 
+    { 
+        _mint(address(this), _supply);
     }
-
+    
     // ---------- STAKES ----------
 
     /**
      * @notice A method for a stakeholder to create a stake.
      * @param _stake The size of the stake to be created.
      */
-    function createStake(uint256 _stake) public {
+    function createStake(uint256 _stake)
+        public
+    {
         _burn(msg.sender, _stake);
-        if (stakes[msg.sender] == 0) addStakeholder(msg.sender);
+        if(stakes[msg.sender] == 0) addStakeholder(msg.sender);
         stakes[msg.sender] = stakes[msg.sender].add(_stake);
     }
 
@@ -49,9 +47,11 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
      * @notice A method for a stakeholder to remove a stake.
      * @param _stake The size of the stake to be removed.
      */
-    function removeStake(uint256 _stake) public {
+    function removeStake(uint256 _stake)
+        public
+    {
         stakes[msg.sender] = stakes[msg.sender].sub(_stake);
-        if (stakes[msg.sender] == 0) removeStakeholder(msg.sender);
+        if(stakes[msg.sender] == 0) removeStakeholder(msg.sender);
         _mint(msg.sender, _stake);
     }
 
@@ -60,7 +60,11 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
      * @param _stakeholder The stakeholder to retrieve the stake for.
      * @return uint256 The amount of wei staked.
      */
-    function stakeOf(address _stakeholder) public view returns (uint256) {
+    function stakeOf(address _stakeholder)
+        public
+        view
+        returns(uint256)
+    {
         return stakes[_stakeholder];
     }
 
@@ -68,9 +72,13 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
      * @notice A method to the aggregated stakes from all stakeholders.
      * @return uint256 The aggregated stakes from all stakeholders.
      */
-    function totalStakes() public view returns (uint256) {
+    function totalStakes()
+        public
+        view
+        returns(uint256)
+    {
         uint256 _totalStakes = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+        for (uint256 s = 0; s < stakeholders.length; s += 1){
             _totalStakes = _totalStakes.add(stakes[stakeholders[s]]);
         }
         return _totalStakes;
@@ -81,15 +89,15 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
     /**
      * @notice A method to check if an address is a stakeholder.
      * @param _address The address to verify.
-     * @return bool, uint256 Whether the address is a stakeholder,
+     * @return bool, uint256 Whether the address is a stakeholder, 
      * and if so its position in the stakeholders array.
      */
     function isStakeholder(address _address)
         public
         view
-        returns (bool, uint256)
+        returns(bool, uint256)
     {
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+        for (uint256 s = 0; s < stakeholders.length; s += 1){
             if (_address == stakeholders[s]) return (true, s);
         }
         return (false, 0);
@@ -99,30 +107,38 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
      * @notice A method to add a stakeholder.
      * @param _stakeholder The stakeholder to add.
      */
-    function addStakeholder(address _stakeholder) public {
+    function addStakeholder(address _stakeholder)
+        public
+    {
         (bool _isStakeholder, ) = isStakeholder(_stakeholder);
-        if (!_isStakeholder) stakeholders.push(_stakeholder);
+        if(!_isStakeholder) stakeholders.push(_stakeholder);
     }
 
     /**
      * @notice A method to remove a stakeholder.
      * @param _stakeholder The stakeholder to remove.
      */
-    function removeStakeholder(address _stakeholder) public {
+    function removeStakeholder(address _stakeholder)
+        public
+    {
         (bool _isStakeholder, uint256 s) = isStakeholder(_stakeholder);
-        if (_isStakeholder) {
+        if(_isStakeholder){
             stakeholders[s] = stakeholders[stakeholders.length - 1];
             stakeholders.pop();
-        }
+        } 
     }
 
     // ---------- REWARDS ----------
-
+    
     /**
      * @notice A method to allow a stakeholder to check his rewards.
      * @param _stakeholder The stakeholder to check rewards for.
      */
-    function rewardOf(address _stakeholder) public view returns (uint256) {
+    function rewardOf(address _stakeholder) 
+        public
+        view
+        returns(uint256)
+    {
         return rewards[_stakeholder];
     }
 
@@ -130,22 +146,26 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
      * @notice A method to the aggregated rewards from all stakeholders.
      * @return uint256 The aggregated rewards from all stakeholders.
      */
-    function totalRewards() public view returns (uint256) {
+    function totalRewards()
+        public
+        view
+        returns(uint256)
+    {
         uint256 _totalRewards = 0;
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+        for (uint256 s = 0; s < stakeholders.length; s += 1){
             _totalRewards = _totalRewards.add(rewards[stakeholders[s]]);
         }
         return _totalRewards;
     }
 
-    /**
+    /** 
      * @notice A simple method that calculates the rewards for each stakeholder.
      * @param _stakeholder The stakeholder to calculate rewards for.
      */
-    function calculateReward(address _stakeholder, uint256 _fees)
+    function calculateReward(address _stakeholder,uint256 _fees)
         public
         view
-        returns (uint256)
+        returns(uint256)
     {
         return (stakes[_stakeholder] * _fees).div(totalStakes());
     }
@@ -153,57 +173,52 @@ contract MelalieUpgradable is ERC20Upgradeable, OwnableUpgradeable {
     /**
      * @notice A method to distribute rewards to all stakeholders.
      */
-    function distributeRewards(uint256 _fees) public onlyOwner {
-        for (uint256 s = 0; s < stakeholders.length; s += 1) {
+    function distributeRewards(uint256 _fees) 
+        public
+        onlyOwner
+    {
+        for (uint256 s = 0; s < stakeholders.length; s += 1){
             address stakeholder = stakeholders[s];
-            uint256 reward = calculateReward(stakeholder, _fees);
+            uint256 reward = calculateReward(stakeholder,_fees);
             rewards[stakeholder] = rewards[stakeholder].add(reward);
         }
     }
 
     /**
      * @notice A method to allow a stakeholder to withdraw his rewards.
-     * It mints new tokens depending on the fees to distribute
      */
-    function withdrawReward() public {
+    function withdrawReward() 
+        public
+    {
         uint256 reward = rewards[msg.sender];
         rewards[msg.sender] = 0;
         _mint(msg.sender, reward);
     }
 
-    function updateMintablePredicateProxy(address newMintableERC20PredicateProxy) external onlyOwner
-    {
-        mintableERC20PredicateProxy = newMintableERC20PredicateProxy;
-    }
-
     /**
-     * @notice The owner of this smart conectract should be able to mint new MelalieToken anytime.
-     */
-    function mint(address _account, uint256 supply) public {
-        require(msg.sender == mintableERC20PredicateProxy,"You're not allowed to deposit");
-        if (_account == address(0)) _account = address(this);
+    * @notice The owner of this smart conectract should be able to mint new MelalieToken anytime.
+    */
+    function mintToken (address _account,uint256 supply) public onlyOwner {
+        if(_account == address(0)) _account = address(this);
         _mint(_account, supply);
     }
 
     /**
-     *  @notice The owner of this smart contract should be able to transfer MelalieToken to any other address
+     *  @notice The owner of this smart contract should be able to transfer MelalieToken to any other address  
      */
-    function transferToken(address sender,address recipient,uint256 amount) public onlyOwner {
+    function transferToken (address sender,address recipient,uint256 amount) public onlyOwner {
         _transfer(sender, recipient, amount);
     }
 
     /**
      * @notice The owner of this smart contract should be able to transfer ETH to any other address from this smart contract address
      */
-    function sendEther(address payable recipient, uint256 amount)
-        external
-        onlyOwner
-    {
+    function sendEther(address payable recipient, uint256 amount) external onlyOwner {
         recipient.transfer(amount);
     }
 
     /**
-     *  @notice This smart contract should be able to receive ETH and other tokens.
-     */
-    receive() external payable {}
+      *  @notice This smart contract should be able to receive ETH and other tokens.
+      */
+    receive() payable external {}
 }
